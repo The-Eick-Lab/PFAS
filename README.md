@@ -1,1 +1,2 @@
-# Projects relating to per- and polyfluoroalkyl substances (PFAS)
+# PFAS
+Projects relating to per- and polyfluoroalkyl substances 
