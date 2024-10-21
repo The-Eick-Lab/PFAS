@@ -1,0 +1,1609 @@
+---
+title: "Tables & Figures"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Load Packages
+```{r}
+library(readxl)
+library("table1")
+library("ggplot2")
+library(tidyverse)
+library(readxl) 
+library("table1") 
+library("ggplot2") 
+library(tidyverse) 
+library(qgcomp) 
+library(ggpubr) 
+library(dotwhisker)
+library(broom)
+library(dplyr)
+library('ggcorrplot') 
+library('corrplot') 
+library(stats)
+library(broom)
+library(logbin)
+library(gWQS)
+
+```
+
+# MAIN TEXT
+
+## Table 1
+Demographic characteristics of study population in the Atlanta African American
+Maternal-Child Cohort, 2014–2020 (N =513)
+```{r}
+
+df2$marital1<- 
+  factor(df2$marital, 
+         levels=c(0,1), 
+         labels=c("Married/Living Together","Single")) 
+
+df2$parity1<- 
+  factor(df2$parity, 
+         levels=c(0,1), 
+         labels=c("no prior births","1 or more births")) 
+
+
+
+df2$tobacco1<- 
+  factor(df2$tobacco, 
+         levels=c(0,1), 
+         labels=c("No", "Yes")) 
+
+
+
+df2$alc1<- 
+  factor(df2$alc, 
+         levels=c(0,1), 
+         labels=c("No", "Yes")) 
+
+
+
+df2$marij1<- 
+  factor(df2$marij, 
+         levels=c(0,1), 
+         labels=c("No", "Yes")) 
+
+
+
+df2$mat_educ1<- 
+  factor(df2$mat_educ, 
+         levels=c(1,2,3,4), 
+         labels=c("less than high school education", "high education or scome college", "college degree", "graduate degree")) 
+
+
+
+
+df2$income1<- 
+  factor(df2$income, 
+         levels=c(0,1,2,3), 
+         labels=c("<100%", "100-150%", "150-300%","300 or greater")) 
+
+
+
+df2$insurance1<- 
+  factor(df2$insurance, 
+         levels=c(1,2), 
+         labels=c("Medicaid", "Private")) 
+
+
+
+df2$sex1<- 
+  factor(df2$sex, 
+         levels=c(1,2), 
+         labels=c("male", "female")) 
+
+
+
+label(df2$marital1)<-"Marital Status" 
+label(df2$parity1)<-"Parity" 
+label(df2$tobacco1)<-"Tobacco use during pregnancy" 
+label(df2$alc1)<-"Alcohol use during pregnancy" 
+label(df2$marij1)<-"Marijuana use during pregnancy" 
+label(df2$mat_educ1)<-"Maternal education" 
+label(df2$income1)<-"Income to poverty ratio" 
+label(df2$insurance1)<-"Health insurance" 
+label(df2$Site_Prenatal)<-"Hospital site" 
+label(df2$sex1)<-"Infant sex" 
+
+
+
+table1.cont <- function(x) { 
+  with(stats.apply.rounding(stats.default(x), digits=2), c("", "Mean (SD)"=sprintf("%s (%s)", MEAN, SD))) 
+} 
+
+
+table1.cat <- function(x) { 
+  c("", sapply(stats.default(x), function(y) with(y,sprintf("%d (%0.0f %%)", FREQ, PCT)))) 
+  
+} 
+
+# among those with preeclampsia 
+
+table1(~ mat_age + ppbmi + marital1  + mat_educ1 + income1 + tobacco1 + alc1 + marij1 +  
+         parity1 + insurance1 + Site_Prenatal + sex1 + as.factor(alc.smoke),
+      overall="N (%) or Mean (SD)",  
+       render.continuous=table1.cont, render.categorical=table1.cat,  
+       data=df2 [which((df2$preecl==1)),]) 
+
+
+
+# among those with gestational hypertension 
+
+table1(~ mat_age + ppbmi + marital1  + mat_educ1 + income1 + tobacco1 + alc1 + marij1 +  
+         parity1 + insurance1 + Site_Prenatal + sex1 + as.factor(alc.smoke),
+       overall="N (%) or Mean (SD)",  
+       render.continuous=table1.cont, render.categorical=table1.cat,  
+       data=df2 [which((df2$g_htn==1)),]) 
+
+
+# among those with no HDP
+table1(~ mat_age + ppbmi + marital1  + mat_educ1 + income1 + tobacco1 + alc1 + marij1 +  
+         parity1 + insurance1 + Site_Prenatal + sex1 + as.factor(alc.smoke),
+       overall="N (%) or Mean (SD)",  
+       render.continuous=table1.cont, render.categorical=table1.cat,  
+       data=df2 [which((df2$preecl==0)),])  
+
+```
+
+## Table 2
+Distribution of serum per- and polyfluoroalkyl substances (ng/mL) concentrations in the Atlanta African American Maternal-Child Cohort, 2014–2020 (N =513)
+```{r}
+dist.table<-function(dt){ 
+  table<-NULL 
+
+  
+  pfoa<-rbind(table, cbind( 
+    "PFOA (ng/mL)", 
+    round((sum(!is.na(dt$PFOA_num))/nrow(dt))*100,2), 
+    paste0((round(exp(mean(log(as.numeric(dt$impPFOA)),na.rm=T)),2)), 
+           " (",(round(exp(sd(log(as.numeric(dt$impPFOA)),na.rm=T)),2)),")"), 
+    round(quantile(na.omit(dt$impPFOA),0.05),3), 
+    round(quantile(na.omit(dt$impPFOA),0.25),3), 
+    round(quantile(na.omit(dt$impPFOA),0.50),3), 
+    round(quantile(na.omit(dt$impPFOA),0.75),3), 
+    round(quantile(na.omit(dt$impPFOA),0.95),3))) 
+  
+  pfxhs<-rbind(table, cbind( 
+    "PFHxS (ng/mL)", 
+    round((sum(!is.na(dt$PFHxS_num))/nrow(dt))*100,2), 
+    paste0((round(exp(mean(log(as.numeric(dt$impPFHxS)),na.rm=T)),2)), 
+           " (",(round(exp(sd(log(as.numeric(dt$impPFHxS)),na.rm=T)),2)),")"), 
+    round(quantile(na.omit(dt$impPFHxS),0.05),3), 
+    round(quantile(na.omit(dt$impPFHxS),0.25),3), 
+    round(quantile(na.omit(dt$impPFHxS),0.50),3), 
+    round(quantile(na.omit(dt$impPFHxS),0.75),3), 
+    round(quantile(na.omit(dt$impPFHxS),0.95),3))) 
+
+  pfos<-rbind(table, cbind( 
+    "PFOS (ng/mL)", 
+    round((sum(!is.na(dt$PFOS_num))/nrow(dt))*100,2), 
+    paste0((round(exp(mean(log(as.numeric(dt$impPFOS)),na.rm=T)),2)), 
+           " (",(round(exp(sd(log(as.numeric(dt$impPFOS)),na.rm=T)),2)),")"), 
+    round(quantile(na.omit(dt$impPFOS),0.05),2), 
+    round(quantile(na.omit(dt$impPFOS),0.25),2), 
+    round(quantile(na.omit(dt$impPFOS),0.50),2), 
+    round(quantile(na.omit(dt$impPFOS),0.75),2), 
+    round(quantile(na.omit(dt$impPFOS),0.95),2))) 
+  
+  pfna<-rbind(table, cbind( 
+    "PFNA (ng/mL)", 
+    round((sum(!is.na(dt$PFNA_num))/nrow(dt))*100,2), 
+    paste0((round(exp(mean(log(as.numeric(dt$impPFNA)),na.rm=T)),2)), 
+           " (",(round(exp(sd(log(as.numeric(dt$impPFNA)),na.rm=T)),2)),")"), 
+    round(quantile(na.omit(dt$impPFNA),0.05),2), 
+    round(quantile(na.omit(dt$impPFNA),0.25),2), 
+    round(quantile(na.omit(dt$impPFNA),0.50),2), 
+    round(quantile(na.omit(dt$impPFNA),0.75),2), 
+    round(quantile(na.omit(dt$impPFNA),0.95),2))) 
+  
+  
+  
+  table<-rbind(pfoa,pfxhs,pfos,pfna) 
+  colnames(table)<-c("   ", "% Above MDL", "Geo Mean (Geo SD)", 
+                     "5%", "25%", "50%", "75%", "95%") 
+  rownames(table)<-NULL 
+  View(table) 
+  clipr::write_clip(table) 
+
+} 
+
+
+
+dist.table(df2[which(df2$preecl==0),]) 
+
+dist.table(df2[which(df2$preecl==1),]) 
+
+dist.table(df2[which(df2$g_htn==1),]) 
+
+
+```
+
+# Table 3
+Odds ratios and 95% confidence intervals for the association between hypertensive
+disorders of pregnancy and the PFAS exposure mixture, estimated using
+quantile g-computation in the Atlanta African American Maternal-Child Cohort,
+2014–2020
+```{r}
+
+df2$log.PFNA<-log(df2$impPFNA)  
+df2$log.PFOA<-log(df2$impPFOA)  
+df2$log.PFOS<-log(df2$impPFOS)  
+df2$log.PFHxS<-log(df2$impPFHxS) 
+
+
+## Subset out complete cases, do this for both preeclampsia and gestational hypertension
+## Creates one dataset for each outcome 
+df.cases.preeclampsia<-c('mat_educ', 
+            'mat_age', 
+            'ppbmi', 
+            'parity', 
+            'alc.smoke', 
+            "log.PFNA", 
+            "log.PFOA", 
+            "log.PFOS", 
+            "log.PFHxS", 
+            'preecl') 
+
+
+
+df.mixtures.preec<-df2[df.cases.preeclampsia]  
+df.mixtures.preec<-df.mixtures.preec[complete.cases(df.mixtures.preec),] 
+
+
+df.cases.ghtn<-c('mat_educ', 
+                         'mat_age', 
+                         'ppbmi', 
+                         'parity', 
+                         'alc.smoke', 
+                         "log.PFNA", 
+                         "log.PFOA", 
+                         "log.PFOS", 
+                         "log.PFHxS", 
+                         'g_htn') 
+
+df.mixtures.ghtn<-df2[df.cases.ghtn]  
+df.mixtures.ghtn<-df.mixtures.ghtn[complete.cases(df.mixtures.ghtn),] 
+
+
+## Set names of exposure variables 
+Xmn.chem<-c("log.PFNA", "log.PFOA", "log.PFOS","log.PFHxS")  
+
+
+### Run qgcomp model for preeclampsia 
+
+Mixture<- qgcomp.noboot(preecl ~ log.PFNA + log.PFOA + log.PFOS +  log.PFHxS + 
+                          as.factor(mat_educ) + mat_age + as.factor(parity) + as.factor(alc.smoke) + ppbmi, 
+                        expnms = Xmn.chem, 
+                        data= df.mixtures.preec, 
+                        family=binomial(), 
+                        q=4) 
+
+### Run qgcomp model for gestational hypertension  
+
+Mixture<- qgcomp.noboot(g_htn ~ log.PFNA + log.PFOA + log.PFOS +  log.PFHxS + 
+                          as.factor(mat_educ) + mat_age + as.factor(parity) + as.factor(alc.smoke) + ppbmi, 
+                        expnms = Xmn.chem, 
+                        data= df.mixtures.ghtn, 
+                        family=binomial(), 
+                        q=4) 
+
+```
+
+# Figure 1
+Adjusted odds ratios and 95% confidence intervals for hypertensive disorders of pregnancy with an interquartile range increase in individual serum PFAS (ng/
+mL) concentrations in the Atlanta African American Maternal-Child Cohort, 2014–2020 (N =513).
+Abbreviations: OR, odds ratio; CI, confidence interval.
+Note: Models are adjusted for maternal age, maternal education, parity, early pregnancy BMI and substance use
+```{r}
+#adjusted 
+#create data
+#figure 2. 
+df<- data.frame(study=c('PFNA','PFHxS','PFOS', 'PFOA'),
+                index=1:4,
+                effect=c(1.03, 0.86, 1.07, 0.91),
+                lower=c(0.67, 0.59, 0.77, 0.64),
+                upper=c(1.65, 1.27, 1.69, 1.34))
+
+plot1<-ggplot(data=df,aes(y=index, x=effect, xmin=lower, xmax=upper)) +
+  geom_point() +
+  geom_errorbarh(height=.1) +
+  scale_y_continuous(name=" ", breaks=1:nrow(df), labels=df$study)+
+  scale_x_continuous(name="OR (95% CI)") + ggtitle("A. Preeclampsia") + 
+  geom_vline(xintercept=1, color="red", linetype="dashed", alpha=.5)+
+  xlim(0.5, 1.75)+
+  xlab("OR (95% CI)")
+
+df<- data.frame(study=c('PFNA','PFHxS','PFOS', 'PFOA'),
+                index=1:4,
+                effect=c(1.05, 0.79, 0.92, 1.07),
+                lower=c(0.72, 0.57, 0.71, 0.78),
+                upper=c(1.60, 1.08, 1.23, 1.51))
+
+plot2<-ggplot(data=df,aes(y=index, x=effect, xmin=lower, xmax=upper)) +
+  geom_point() +
+  geom_errorbarh(height=.1) +
+  scale_y_continuous(name=" ", breaks=1:nrow(df), labels=df$study)+
+  scale_x_continuous(name="OR (95% CI)") + ggtitle("B. Gestational Hypertension") +
+  geom_vline(xintercept=1, color="red", linetype="dashed", alpha=.5)+
+  xlim(0.5, 1.75)+
+  xlab("OR (95% CI)")
+
+
+
+figure<-ggarrange(plot1, plot2,
+                  ncol= 2, nrow=1)
+figure
+
+
+
+
+```
+
+
+# SUPPLEMENTAL TEXT
+
+## Table S1
+Unadjusted and adjusted odds ratios and 95% confidence intervals for individual hypertensive disorders of pregnancy with an interquartile range increase in serum PFAS (ng/mL) in the Atlanta African American Maternal-Child Cohort, 2014-2020
+```{r}
+# preeclampsisa 
+
+model.1<-glm(preecl~(PFOA.iqr), 
+             family =binomial(link = "logit"), 
+             data=df2) 
+
+or<-round(exp(coef(model.1)),2) 
+or 
+ci.ll<-round(exp(confint(model.1)),2) [2] 
+ci.ll
+ci.ul<-round(exp(confint(model.1)),2) [4] 
+ci.ul
+table(model.1$model$preecl) 
+
+
+model.1<-glm(preecl~(PFOS.iqr), 
+             family =binomial(link = "logit"), 
+             data=df2) 
+
+or<-round(exp(coef(model.1)),2) 
+or 
+ci.ll<-round(exp(confint(model.1)),2) [2] 
+ci.ll
+ci.ul<-round(exp(confint(model.1)),2) [4] 
+ci.ul
+table(model.1$model$preecl) 
+
+
+model.1<-glm(preecl~(PFHxS.iqr), 
+             family =binomial(link = "logit"), 
+             data=df2) 
+
+or<-round(exp(coef(model.1)),2) 
+or 
+ci.ll<-round(exp(confint(model.1)),2) [2] 
+ci.ll
+ci.ul<-round(exp(confint(model.1)),2) [4] 
+ci.ul
+table(model.1$model$preecl) 
+
+
+model.1<-glm(preecl~(PFNA.iqr), 
+             family =binomial(link = "logit"), 
+             data=df2) 
+
+or<-round(exp(coef(model.1)),2) 
+or 
+ci.ll<-round(exp(confint(model.1)),2) [2] 
+ci.ll
+ci.ul<-round(exp(confint(model.1)),2) [4] 
+ci.ul
+table(model.1$model$preecl) 
+
+
+# gestational hypertension 
+
+model.1<-glm(g_htn~(PFOA.iqr), 
+             family =binomial(link = "logit"), 
+             data=df2) 
+
+or<-round(exp(coef(model.1)),2) 
+or 
+ci.ll<-round(exp(confint(model.1)),2) [2] 
+ci.ll
+ci.ul<-round(exp(confint(model.1)),2) [4] 
+ci.ul
+table(model.1$model$g_htn) 
+
+
+model.1<-glm(g_htn~(PFOS.iqr), 
+             family =binomial(link = "logit"), 
+             data=df2) 
+
+or<-round(exp(coef(model.1)),2) 
+or 
+ci.ll<-round(exp(confint(model.1)),2) [2] 
+ci.ll
+ci.ul<-round(exp(confint(model.1)),2) [4] 
+ci.ul
+table(model.1$model$g_htn) 
+
+
+model.1<-glm(g_htn~(PFHxS.iqr), 
+             family =binomial(link = "logit"), 
+             data=df2) 
+
+or<-round(exp(coef(model.1)),2) 
+or 
+ci.ll<-round(exp(confint(model.1)),2) [2] 
+ci.ll
+ci.ul<-round(exp(confint(model.1)),2) [4] 
+ci.ul
+table(model.1$model$g_htn) 
+
+
+model.1<-glm(g_htn~(PFNA.iqr), 
+             family =binomial(link = "logit"), 
+             data=df2) 
+
+or<-round(exp(coef(model.1)),2) 
+or 
+ci.ll<-round(exp(confint(model.1)),2) [2] 
+ci.ll
+ci.ul<-round(exp(confint(model.1)),2) [4] 
+ci.ul
+table(model.1$model$g_htn) 
+
+
+
+# adjusted ORs 
+
+# preeclampsisa 
+
+model.1<-glm(preecl~(PFOA.iqr) + as.factor(mat_educ) + mat_age + as.factor(parity)  +  as.factor(alc.smoke) + ppbmi, 
+             family =binomial(link = "logit"), 
+             data=df2) 
+or<-round(exp(coef(model.1)),2) 
+or 
+ci.ll<-round(exp(confint(model.1)),2) [2] 
+ci.ll
+ci.ul<-round(exp(confint(model.1)),2) [2,2] 
+ci.ul
+table(model.1$model$preecl) 
+
+
+model.1<-glm(preecl~(PFOS.iqr) + as.factor(mat_educ) + mat_age + as.factor(parity)  +  as.factor(alc.smoke) + ppbmi, 
+             family =binomial(link = "logit"), 
+             data=df2) 
+
+or<-round(exp(coef(model.1)),2) 
+or 
+ci.ll<-round(exp(confint(model.1)),2) [2] 
+ci.ll
+ci.ul<-round(exp(confint(model.1)),2) [2,2]  
+ci.ul
+table(model.1$model$preecl) 
+
+model.1<-glm(preecl~(PFHxS.iqr) + as.factor(mat_educ) + mat_age + as.factor(parity)  +  as.factor(alc.smoke) + ppbmi, 
+             family =binomial(link = "logit"), 
+             data=df2) 
+
+or<-round(exp(coef(model.1)),2) 
+or 
+ci.ll<-round(exp(confint(model.1)),2) [2] 
+ci.ll
+ci.ul<-round(exp(confint(model.1)),2) [2,2]  
+ci.ul
+table(model.1$model$preecl) 
+######################################### 
+
+
+model.1<-glm(preecl~(PFNA.iqr) + as.factor(mat_educ) + mat_age + as.factor(parity)  +  as.factor(alc.smoke) + ppbmi, 
+             family =binomial(link = "logit"), 
+             data=df2) 
+or<-round(exp(coef(model.1)),2) 
+or 
+ci.ll<-round(exp(confint(model.1)),2) [2] 
+ci.ll
+ci.ul<-round(exp(confint(model.1)),2) [2,2]  
+ci.ul
+table(model.1$model$preecl) 
+
+
+
+# gestational hypertension 
+
+model.1<-glm(g_htn~(PFOA.iqr) + as.factor(mat_educ) + mat_age + as.factor(parity)  +  as.factor(alc.smoke) + ppbmi, 
+             
+             family =binomial(link = "logit"), 
+             
+             data=df2) 
+or<-round(exp(coef(model.1)),2) 
+or 
+ci.ll<-round(exp(confint(model.1)),2) [2] 
+ci.ll
+ci.ul<-round(exp(confint(model.1)),2) [2,2] 
+ci.ul
+table(model.1$model$g_htn) 
+
+
+model.1<-glm(g_htn~(PFOS.iqr) + as.factor(mat_educ) + mat_age + as.factor(parity)  +  as.factor(alc.smoke) + ppbmi, 
+             family =binomial(link = "logit"), 
+             data=df2) 
+
+or<-round(exp(coef(model.1)),2) 
+or 
+ci.ll<-round(exp(confint(model.1)),2) [2] 
+ci.ll
+ci.ul<-round(exp(confint(model.1)),2) [2,2]  
+ci.ul
+table(model.1$model$g_htn) 
+
+
+model.1<-glm(g_htn~(PFHxS.iqr) + as.factor(mat_educ) + mat_age + as.factor(parity)  +  as.factor(alc.smoke) + ppbmi, 
+             family =binomial(link = "logit"), 
+             
+             data=df2) 
+
+or<-round(exp(coef(model.1)),2) 
+or 
+ci.ll<-round(exp(confint(model.1)),2) [2] 
+ci.ll
+ci.ul<-round(exp(confint(model.1)),2) [2,2]  
+ci.ul
+table(model.1$model$g_htn) 
+
+
+model.1<-glm(g_htn~(PFNA.iqr) + as.factor(mat_educ) + mat_age + as.factor(parity)  +  as.factor(alc.smoke) + ppbmi, 
+             family =binomial(link = "logit"), 
+             data=df2) 
+or<-round(exp(coef(model.1)),2) 
+or 
+ci.ll<-round(exp(confint(model.1)),2) [2] 
+ci.ll
+ci.ul<-round(exp(confint(model.1)),2) [2,2]  
+ci.ul
+table(model.1$model$g_htn) 
+
+
+
+```
+
+## Table S2
+Sensitivity analysis using full term births (i.e., births occurring at gestational age ≥39 weeks and without complications, such as gestational hypertension, gestational diabetes, or preeclampsia) as the reference group when estimating odds ratios and 95% confidence intervals for the association between hypertensive disorders of pregnancy and individual PFAS and their mixture among pregnant persons in the Atlanta African American Maternal-Child Cohort, 2014-2020
+```{r}
+##### quantile g-compuation ####
+
+## Subset out complete cases, do this for both preeclampsia and gestational hypertension
+## Creates one dataset for each outcome 
+df.cases.preeclampsia.se<-c('mat_educ', 
+                         'mat_age', 
+                         'ppbmi', 
+                         'parity', 
+                         'alc.smoke', 
+                         "log.PFNA", 
+                         "log.PFOA", 
+                         "log.PFOS", 
+                         "log.PFHxS", 
+                         'preecl_hftb') 
+
+
+
+df.mixtures.preec.se<-df2[df.cases.preeclampsia.se]  
+df.mixtures.preec.se<-df.mixtures.preec.se[complete.cases(df.mixtures.preec.se),] 
+
+
+df.cases.ghtn.se<-c('mat_educ', 
+                 'mat_age', 
+                 'ppbmi', 
+                 'parity', 
+                 'alc.smoke', 
+                 "log.PFNA", 
+                 "log.PFOA", 
+                 "log.PFOS", 
+                 "log.PFHxS", 
+                 'g_htn_hftb') 
+
+df.mixtures.ghtn.se<-df2[df.cases.ghtn.se]  
+df.mixtures.ghtn.se<-df.mixtures.ghtn.se[complete.cases(df.mixtures.ghtn.se),] 
+
+
+## Set names of exposure variables 
+Xmn.chem<-c("log.PFNA", "log.PFOA", "log.PFOS","log.PFHxS")  
+
+
+### Run qgcomp model for preeclampsia 
+
+Mixture<- qgcomp.noboot(preecl_hftb ~ log.PFNA + log.PFOA + log.PFOS +  log.PFHxS + 
+                          as.factor(mat_educ) + mat_age + as.factor(parity) + as.factor(alc.smoke) + ppbmi, 
+                        expnms = Xmn.chem, 
+                        data= df.mixtures.preec.se, 
+                        family=binomial(), 
+                        q=4) 
+
+
+# Ouput weight plot
+plot(Mixture)  
+# Output effect estimates  
+exp(round((Mixture $psi),2))  
+exp(round((Mixture $ci.coef),2)) 
+table(df.mixtures.preec.se$preecl) 
+
+#negative weights: 
+Mixture$neg.weights 
+# positive weights: 
+Mixture$pos.weights 
+
+
+### Run qgcomp model for gestational hypertension  
+
+Mixture<- qgcomp.noboot(g_htn_hftb ~ log.PFNA + log.PFOA + log.PFOS +  log.PFHxS + 
+                          as.factor(mat_educ) + mat_age + as.factor(parity) + as.factor(alc.smoke) + ppbmi, 
+                        expnms = Xmn.chem, 
+                        data= df.mixtures.ghtn.se, 
+                        family=binomial(), 
+                        q=4) 
+
+
+# Ouput weight plot
+plot(Mixture)  
+# Output effect estimates  
+exp(round((Mixture $psi),2))  
+exp(round((Mixture $ci.coef),2)) 
+table(df.mixtures.ghtn.se$g_htn_hftb)
+
+
+# individual ORs - preeclampsisa 
+
+model.1<-glm(preecl_hftb~(PFOA.iqr) + as.factor(mat_educ) + mat_age + as.factor(parity)  +  as.factor(alc.smoke) + ppbmi, 
+             
+             family =binomial(link = "logit"), 
+             
+             data=df2) 
+or<-round(exp(coef(model.1)),2) 
+or 
+ci.ll<-round(exp(confint(model.1)),2) [2] 
+ci.ll
+
+ci.ul<-round(exp(confint(model.1)),2) [2,2] 
+ci.ul
+table(model.1$model$preecl_hftb) 
+
+
+model.1<-glm(preecl_hftb~(PFOS.iqr) + as.factor(mat_educ) + mat_age + as.factor(parity)  +  as.factor(alc.smoke) + ppbmi, 
+             family =binomial(link = "logit"), 
+             data=df2) 
+
+or<-round(exp(coef(model.1)),2) 
+or 
+ci.ll<-round(exp(confint(model.1)),2) [2] 
+ci.ll
+ci.ul<-round(exp(confint(model.1)),2) [2,2]  
+ci.ul
+table(model.1$model$preecl_hftb) 
+
+
+model.1<-glm(preecl_hftb~(PFHxS.iqr) + as.factor(mat_educ) + mat_age + as.factor(parity)  +  as.factor(alc.smoke) + ppbmi, 
+             family =binomial(link = "logit"), 
+             
+             data=df2) 
+
+or<-round(exp(coef(model.1)),2) 
+or 
+ci.ll<-round(exp(confint(model.1)),2) [2] 
+ci.ll
+ci.ul<-round(exp(confint(model.1)),2) [2,2]  
+ci.ul
+table(model.1$model$preecl_hftb) 
+
+
+model.1<-glm(preecl_hftb~(PFNA.iqr) + as.factor(mat_educ) + mat_age + as.factor(parity)  +  as.factor(alc.smoke) + ppbmi, 
+             family =binomial(link = "logit"), 
+             data=df2) 
+or<-round(exp(coef(model.1)),2) 
+or 
+ci.ll<-round(exp(confint(model.1)),2) [2] 
+ci.ll
+ci.ul<-round(exp(confint(model.1)),2) [2,2]  
+ci.ul
+table(model.1$model$preecl_hftb) 
+
+
+
+#individual ORs - gestational hypertension 
+
+model.1<-glm(g_htn_hftb~(PFOA.iqr) + as.factor(mat_educ) + mat_age + as.factor(parity)  +  as.factor(alc.smoke) + ppbmi, 
+             
+             family =binomial(link = "logit"), 
+             
+             data=df2) 
+or<-round(exp(coef(model.1)),2) 
+or 
+ci.ll<-round(exp(confint(model.1)),2) [2] 
+ci.ll
+ci.ul<-round(exp(confint(model.1)),2) [2,2] 
+ci.ul
+table(model.1$model$g_htn_hftb) 
+
+
+model.1<-glm(g_htn_hftb~(PFOS.iqr) + as.factor(mat_educ) + mat_age + as.factor(parity)  +  as.factor(alc.smoke) + ppbmi, 
+             family =binomial(link = "logit"), 
+             data=df2) 
+
+or<-round(exp(coef(model.1)),2) 
+or 
+ci.ll<-round(exp(confint(model.1)),2) [2] 
+ci.ll
+ci.ul<-round(exp(confint(model.1)),2) [2,2]  
+ci.ul
+table(model.1$model$g_htn_hftb) 
+
+
+model.1<-glm(g_htn_hftb~(PFHxS.iqr) + as.factor(mat_educ) + mat_age + as.factor(parity)  +  as.factor(alc.smoke) + ppbmi, 
+             family =binomial(link = "logit"), 
+             
+             data=df2) 
+
+or<-round(exp(coef(model.1)),2) 
+or 
+ci.ll<-round(exp(confint(model.1)),2) [2] 
+ci.ll
+ci.ul<-round(exp(confint(model.1)),2) [2,2]  
+ci.ul
+table(model.1$model$g_htn_hftb) 
+
+
+model.1<-glm(g_htn_hftb~(PFNA.iqr) + as.factor(mat_educ) + mat_age + as.factor(parity)  +  as.factor(alc.smoke) + ppbmi, 
+             family =binomial(link = "logit"), 
+             data=df2) 
+or<-round(exp(coef(model.1)),2) 
+or 
+ci.ll<-round(exp(confint(model.1)),2) [2] 
+ci.ll
+ci.ul<-round(exp(confint(model.1)),2) [2,2]  
+ci.ul
+table(model.1$model$g_htn_hftb) 
+
+
+```
+
+## Table S3
+Weights representing the proportion of the positive and negative effect on hypertensive disorders of pregnancy in relation to a mixture of PFAS, estimated using quantile g-computation in the Atlanta African American Maternal-Child Cohort, 2014-2020 (N=513)
+```{r}
+
+df2$log.PFNA<-log(df2$impPFNA)  
+df2$log.PFOA<-log(df2$impPFOA)  
+df2$log.PFOS<-log(df2$impPFOS)  
+df2$log.PFHxS<-log(df2$impPFHxS) 
+
+
+## Subset out complete cases, do this for both preeclampsia and gestational hypertension
+## Creates one dataset for each outcome 
+df.cases.preeclampsia<-c('mat_educ', 
+            'mat_age', 
+            'ppbmi', 
+            'parity', 
+            'alc.smoke', 
+            "log.PFNA", 
+            "log.PFOA", 
+            "log.PFOS", 
+            "log.PFHxS", 
+            'preecl') 
+
+
+
+df.mixtures.preec<-df2[df.cases.preeclampsia]  
+df.mixtures.preec<-df.mixtures.preec[complete.cases(df.mixtures.preec),] 
+
+
+df.cases.ghtn<-c('mat_educ', 
+                         'mat_age', 
+                         'ppbmi', 
+                         'parity', 
+                         'alc.smoke', 
+                         "log.PFNA", 
+                         "log.PFOA", 
+                         "log.PFOS", 
+                         "log.PFHxS", 
+                         'g_htn') 
+
+df.mixtures.ghtn<-df2[df.cases.ghtn]  
+df.mixtures.ghtn<-df.mixtures.ghtn[complete.cases(df.mixtures.ghtn),] 
+
+
+## Set names of exposure variables 
+Xmn.chem<-c("log.PFNA", "log.PFOA", "log.PFOS","log.PFHxS")  
+
+
+### Run qgcomp model for preeclampsia 
+
+Mixture<- qgcomp.noboot(preecl ~ log.PFNA + log.PFOA + log.PFOS +  log.PFHxS + 
+                          as.factor(mat_educ) + mat_age + as.factor(parity) + as.factor(alc.smoke) + ppbmi, 
+                        expnms = Xmn.chem, 
+                        data= df.mixtures.preec, 
+                        family=binomial(), 
+                        q=4) 
+# Ouput weight plot
+plot(Mixture)  
+# Output effect estimates  
+exp(round((Mixture $psi),2))  
+exp(round((Mixture $ci.coef),2)) 
+table(df.mixtures.preec$preecl) 
+
+#negative weights: 
+Mixture$neg.weights 
+# positive weights: 
+Mixture$pos.weights 
+
+
+### Run qgcomp model for gestational hypertension  
+
+Mixture<- qgcomp.noboot(g_htn ~ log.PFNA + log.PFOA + log.PFOS +  log.PFHxS + 
+                          as.factor(mat_educ) + mat_age + as.factor(parity) + as.factor(alc.smoke) + ppbmi, 
+                        expnms = Xmn.chem, 
+                        data= df.mixtures.ghtn, 
+                        family=binomial(), 
+                        q=4) 
+
+# Ouput weight plot
+plot(Mixture)  
+# Output effect estimates  
+exp(round((Mixture $psi),2))  
+exp(round((Mixture $ci.coef),2)) 
+table(df.mixtures.ghtn$g_htn) 
+
+#negative weights: 
+Mixture$neg.weights 
+# positive weights: 
+Mixture$pos.weights 
+
+```
+
+## Table S4
+Sensitivity analysis additionally removing those with chronic pre-pregnancy hypertension when estimating odds ratios and 95% confidence intervals for the association between hypertensive disorders of pregnancy and individual PFAS and their mixture among pregnant persons in the Atlanta African American Maternal-Child Cohort, 2014-2020
+```{r}
+df.no.chtn<-df2[which(df2$c_htn!=1),]
+
+## Subset out complete cases, do this for both preeclampsia and gestational hypertension
+## Creates one dataset for each outcome 
+df.cases.preeclampsia.se.2<-c('mat_educ', 
+                              'mat_age', 
+                              'ppbmi', 
+                              'parity', 
+                              'alc.smoke', 
+                              "log.PFNA", 
+                              "log.PFOA", 
+                              "log.PFOS", 
+                              "log.PFHxS", 
+                              'preecl') 
+
+
+
+df.cases.preeclampsia.se.2<-df.no.chtn[df.cases.preeclampsia.se.2]  
+df.cases.preeclampsia.se.2<-df.cases.preeclampsia.se.2[complete.cases(df.cases.preeclampsia.se.2),] 
+
+
+df.cases.ghtn.se.2<-c('mat_educ', 
+                      'mat_age', 
+                      'ppbmi', 
+                      'parity', 
+                      'alc.smoke', 
+                      "log.PFNA", 
+                      "log.PFOA", 
+                      "log.PFOS", 
+                      "log.PFHxS", 
+                      'g_htn') 
+
+df.cases.ghtn.se.2<-df.no.chtn[df.cases.ghtn.se.2]  
+df.cases.ghtn.se.2<-df.cases.ghtn.se.2[complete.cases(df.cases.ghtn.se.2),] 
+
+
+## Set names of exposure variables 
+Xmn.chem<-c("log.PFNA", "log.PFOA", "log.PFOS","log.PFHxS")  
+
+
+### Run qgcomp model for preeclampsia 
+
+Mixture<- qgcomp.noboot(preecl ~ log.PFNA + log.PFOA + log.PFOS +  log.PFHxS + 
+                          as.factor(mat_educ) + mat_age + as.factor(parity) + as.factor(alc.smoke) + ppbmi , 
+                        expnms = Xmn.chem, 
+                        data= df.cases.preeclampsia.se.2, 
+                        family=binomial(), 
+                        q=4) 
+
+# Output effect estimates  
+exp(round((Mixture $psi),2))  
+exp(round((Mixture $ci.coef),2)) 
+table(df.cases.preeclampsia.se.2$preecl)
+
+### Run qgcomp model for gestational hypertension  
+
+Mixture<- qgcomp.noboot(g_htn ~ log.PFNA + log.PFOA + log.PFOS +  log.PFHxS + 
+                          as.factor(mat_educ) + mat_age + as.factor(parity) + as.factor(alc.smoke) + ppbmi , 
+                        expnms = Xmn.chem, 
+                        data= df.cases.ghtn.se.2, 
+                        family=binomial(), 
+                        q=4) 
+
+
+# Output effect estimates  
+exp(round((Mixture $psi),2))  
+exp(round((Mixture $ci.coef),2)) 
+table(df.cases.ghtn.se.2$g_htn)
+
+
+
+
+# adjusted ORs removing those with chtn
+
+# preeclampsisa 
+
+df.no.chtn$PFOA.iqr<-log(df.no.chtn$impPFOA)/IQR(log(df.no.chtn$impPFOA),na.rm=TRUE) 
+model.1<-glm(preecl~(PFOA.iqr) + as.factor(mat_educ) + mat_age + as.factor(parity)  +  as.factor(alc.smoke) + ppbmi , 
+             
+             family =binomial(link = "logit"), 
+             
+             data=df.no.chtn) 
+or<-round(exp(coef(model.1)),2) 
+or 
+ci.ll<-round(exp(confint(model.1)),2) [2] 
+ci.ll
+ci.ul<-round(exp(confint(model.1)),2) [2,2] 
+ci.ul
+table(model.1$model$preecl) 
+
+
+df.no.chtn$PFOS.iqr<-log(df.no.chtn$impPFOS)/IQR(log(df.no.chtn$impPFOS),na.rm=TRUE) 
+model.1<-glm(preecl~(PFOS.iqr) + as.factor(mat_educ) + mat_age + as.factor(parity)  +  as.factor(alc.smoke) + ppbmi, 
+             family =binomial(link = "logit"), 
+             data=df.no.chtn) 
+
+or<-round(exp(coef(model.1)),2) 
+or 
+ci.ll<-round(exp(confint(model.1)),2) [2] 
+ci.ll
+ci.ul<-round(exp(confint(model.1)),2) [2,2]  
+ci.ul
+table(model.1$model$preecl) 
+
+
+df.no.chtn$PFHxS.iqr<-log(df.no.chtn$impPFHxS)/IQR(log(df.no.chtn$impPFHxS),na.rm=TRUE) 
+model.1<-glm(preecl~(PFHxS.iqr) + as.factor(mat_educ) + mat_age + as.factor(parity)  +  as.factor(alc.smoke) + ppbmi , 
+             family =binomial(link = "logit"), 
+             
+             data=df.no.chtn) 
+
+or<-round(exp(coef(model.1)),2) 
+or 
+ci.ll<-round(exp(confint(model.1)),2) [2] 
+ci.ll
+ci.ul<-round(exp(confint(model.1)),2) [2,2]  
+ci.ul
+table(model.1$model$preecl) 
+
+df.no.chtn$PFNA.iqr<-log(df.no.chtn$impPFNA)/IQR(log(df.no.chtn$impPFNA),na.rm=TRUE) 
+
+model.1<-glm(preecl~(PFNA.iqr) + as.factor(mat_educ) + mat_age + as.factor(parity)  +  as.factor(alc.smoke) + ppbmi , 
+             family =binomial(link = "logit"), 
+             data=df.no.chtn) 
+or<-round(exp(coef(model.1)),2) 
+or 
+ci.ll<-round(exp(confint(model.1)),2) [2] 
+ci.ll
+ci.ul<-round(exp(confint(model.1)),2) [2,2]  
+ci.ul
+table(model.1$model$preecl) 
+
+
+
+# gestational hypertension 
+
+df.no.chtn$PFOA.iqr<-log(df.no.chtn$impPFOA)/IQR(log(df.no.chtn$impPFOA),na.rm=TRUE) 
+model.1<-glm(g_htn~(PFOA.iqr) + as.factor(mat_educ) + mat_age + as.factor(parity)  +  as.factor(alc.smoke) + ppbmi , 
+             
+             family =binomial(link = "logit"), 
+             
+             data=df.no.chtn) 
+or<-round(exp(coef(model.1)),2) 
+or 
+ci.ll<-round(exp(confint(model.1)),2) [2] 
+ci.ll
+ci.ul<-round(exp(confint(model.1)),2) [2,2] 
+ci.ul
+table(model.1$model$g_htn) 
+
+
+df.no.chtn$PFOS.iqr<-log(df.no.chtn$impPFOS)/IQR(log(df.no.chtn$impPFOS),na.rm=TRUE) 
+model.1<-glm(g_htn~(PFOS.iqr) + as.factor(mat_educ) + mat_age + as.factor(parity)  +  as.factor(alc.smoke) + ppbmi , 
+             family =binomial(link = "logit"), 
+             data=df.no.chtn) 
+
+or<-round(exp(coef(model.1)),2) 
+or 
+ci.ll<-round(exp(confint(model.1)),2) [2] 
+ci.ll
+ci.ul<-round(exp(confint(model.1)),2) [2,2]  
+ci.ul
+table(model.1$model$g_htn) 
+
+
+df.no.chtn$PFHxS.iqr<-log(df.no.chtn$impPFHxS)/IQR(log(df.no.chtn$impPFHxS),na.rm=TRUE) 
+model.1<-glm(g_htn~(PFHxS.iqr) + as.factor(mat_educ) + mat_age + as.factor(parity)  +  as.factor(alc.smoke) + ppbmi , 
+             family =binomial(link = "logit"), 
+             
+             data=df.no.chtn) 
+
+or<-round(exp(coef(model.1)),2) 
+or 
+ci.ll<-round(exp(confint(model.1)),2) [2] 
+ci.ll
+ci.ul<-round(exp(confint(model.1)),2) [2,2]  
+ci.ul
+table(model.1$model$g_htn) 
+
+
+df.no.chtn$PFNA.iqr<-log(df.no.chtn$impPFNA)/IQR(log(df.no.chtn$impPFNA),na.rm=TRUE) 
+
+model.1<-glm(g_htn~(PFNA.iqr) + as.factor(mat_educ) + mat_age + as.factor(parity)  +  as.factor(alc.smoke) + ppbmi , 
+             family =binomial(link = "logit"), 
+             data=df.no.chtn) 
+or<-round(exp(coef(model.1)),2) 
+or 
+ci.ll<-round(exp(confint(model.1)),2) [2] 
+ci.ll
+ci.ul<-round(exp(confint(model.1)),2) [2,2]  
+ci.ul
+table(model.1$model$g_htn) 
+
+
+
+```
+
+## Table S5
+Sensitivity analysis additionally adjusting for experiences of gendered racial stress when estimating odds ratios and 95% confidence intervals for the association between hypertensive disorders of pregnancy and individual PFAS and their mixture among pregnant persons in the Atlanta African American Maternal-Child Cohort, 2014-2020
+```{r}
+##### quantile g-compuation ####
+
+
+## Subset out complete cases, do this for both preeclampsia and gestational hypertension
+## Creates one dataset for each outcome 
+df.cases.preeclampsia.se.1<-c('mat_educ', 
+                            'mat_age', 
+                            'ppbmi', 
+                            'parity', 
+                            'alc.smoke', 
+                            "log.PFNA", 
+                            "log.PFOA", 
+                            "log.PFOS", 
+                            "log.PFHxS", 
+                            'preecl',
+                            'JHP_Total') 
+
+
+
+df.cases.preeclampsia.se.1<-df2[df.cases.preeclampsia.se.1]  
+df.cases.preeclampsia.se.1<-df.cases.preeclampsia.se.1[complete.cases(df.cases.preeclampsia.se.1),] 
+
+
+df.cases.ghtn.se.1<-c('mat_educ', 
+                    'mat_age', 
+                    'ppbmi', 
+                    'parity', 
+                    'alc.smoke', 
+                    "log.PFNA", 
+                    "log.PFOA", 
+                    "log.PFOS", 
+                    "log.PFHxS", 
+                    'g_htn',
+                    'JHP_Total') 
+
+df.cases.ghtn.se.1<-df2[df.cases.ghtn.se.1]  
+df.cases.ghtn.se.1<-df.cases.ghtn.se.1[complete.cases(df.cases.ghtn.se.1),] 
+
+
+## Set names of exposure variables 
+Xmn.chem<-c("log.PFNA", "log.PFOA", "log.PFOS","log.PFHxS")  
+
+
+### Run qgcomp model for preeclampsia 
+
+Mixture<- qgcomp.noboot(preecl ~ log.PFNA + log.PFOA + log.PFOS +  log.PFHxS + 
+                          as.factor(mat_educ) + mat_age + as.factor(parity) + as.factor(alc.smoke) + ppbmi + JHP_Total, 
+                        expnms = Xmn.chem, 
+                        data= df.cases.preeclampsia.se.1, 
+                        family=binomial(), 
+                        q=4) 
+
+# Output effect estimates  
+exp(round((Mixture $psi),2))  
+exp(round((Mixture $ci.coef),2)) 
+table(df.cases.preeclampsia.se.1$preecl)
+
+### Run qgcomp model for gestational hypertension  
+
+Mixture<- qgcomp.noboot(g_htn ~ log.PFNA + log.PFOA + log.PFOS +  log.PFHxS + 
+                          as.factor(mat_educ) + mat_age + as.factor(parity) + as.factor(alc.smoke) + ppbmi + JHP_Total, 
+                        expnms = Xmn.chem, 
+                        data= df.cases.ghtn.se.1, 
+                        family=binomial(), 
+                        q=4) 
+
+
+# Output effect estimates  
+exp(round((Mixture $psi),2))  
+exp(round((Mixture $ci.coef),2)) 
+table(df.cases.ghtn.se.1$g_htn)
+
+
+
+
+# adjusted individual ORs additionally adjusting for JHP 
+
+# preeclampsisa 
+
+model.1<-glm(preecl~(PFOA.iqr) + as.factor(mat_educ) + mat_age + as.factor(parity)  +  as.factor(alc.smoke) + ppbmi + JHP_Total, 
+             
+             family =binomial(link = "logit"), 
+             
+             data=df2) 
+or<-round(exp(coef(model.1)),2) 
+or 
+ci.ll<-round(exp(confint(model.1)),2) [2] 
+ci.ll
+ci.ul<-round(exp(confint(model.1)),2) [2,2] 
+ci.ul
+table(model.1$model$preecl) 
+
+
+model.1<-glm(preecl~(PFOS.iqr) + as.factor(mat_educ) + mat_age + as.factor(parity)  +  as.factor(alc.smoke) + ppbmi + JHP_Total, 
+             family =binomial(link = "logit"), 
+             data=df2) 
+
+or<-round(exp(coef(model.1)),2) 
+or 
+ci.ll<-round(exp(confint(model.1)),2) [2] 
+ci.ll
+ci.ul<-round(exp(confint(model.1)),2) [2,2]  
+ci.ul
+table(model.1$model$preecl) 
+
+
+model.1<-glm(preecl~(PFHxS.iqr) + as.factor(mat_educ) + mat_age + as.factor(parity)  +  as.factor(alc.smoke) + ppbmi + JHP_Total, 
+             family =binomial(link = "logit"), 
+             
+             data=df2) 
+
+or<-round(exp(coef(model.1)),2) 
+or 
+ci.ll<-round(exp(confint(model.1)),2) [2] 
+ci.ll
+ci.ul<-round(exp(confint(model.1)),2) [2,2]  
+ci.ul
+table(model.1$model$preecl) 
+
+
+model.1<-glm(preecl~(PFNA.iqr) + as.factor(mat_educ) + mat_age + as.factor(parity)  +  as.factor(alc.smoke) + ppbmi + JHP_Total, 
+             family =binomial(link = "logit"), 
+             data=df2) 
+or<-round(exp(coef(model.1)),2) 
+or 
+ci.ll<-round(exp(confint(model.1)),2) [2] 
+ci.ll
+ci.ul<-round(exp(confint(model.1)),2) [2,2]  
+ci.ul
+table(model.1$model$preecl) 
+
+
+
+# gestational hypertension 
+
+model.1<-glm(g_htn~(PFOA.iqr) + as.factor(mat_educ) + mat_age + as.factor(parity)  +  as.factor(alc.smoke) + ppbmi + JHP_Total, 
+             
+             family =binomial(link = "logit"), 
+             
+             data=df2) 
+or<-round(exp(coef(model.1)),2) 
+or 
+ci.ll<-round(exp(confint(model.1)),2) [2] 
+ci.ll
+ci.ul<-round(exp(confint(model.1)),2) [2,2] 
+ci.ul
+table(model.1$model$g_htn) 
+
+
+model.1<-glm(g_htn~(PFOS.iqr) + as.factor(mat_educ) + mat_age + as.factor(parity)  +  as.factor(alc.smoke) + ppbmi + JHP_Total, 
+             family =binomial(link = "logit"), 
+             data=df2) 
+
+or<-round(exp(coef(model.1)),2) 
+or 
+ci.ll<-round(exp(confint(model.1)),2) [2] 
+ci.ll
+ci.ul<-round(exp(confint(model.1)),2) [2,2]  
+ci.ul
+table(model.1$model$g_htn) 
+
+
+model.1<-glm(g_htn~(PFHxS.iqr) + as.factor(mat_educ) + mat_age + as.factor(parity)  +  as.factor(alc.smoke) + ppbmi + JHP_Total, 
+             family =binomial(link = "logit"), 
+             
+             data=df2) 
+
+or<-round(exp(coef(model.1)),2) 
+or 
+ci.ll<-round(exp(confint(model.1)),2) [2] 
+ci.ll
+ci.ul<-round(exp(confint(model.1)),2) [2,2]  
+ci.ul
+table(model.1$model$g_htn) 
+
+
+model.1<-glm(g_htn~(PFNA.iqr) + as.factor(mat_educ) + mat_age + as.factor(parity)  +  as.factor(alc.smoke) + ppbmi + JHP_Total, 
+             family =binomial(link = "logit"), 
+             data=df2) 
+or<-round(exp(coef(model.1)),2) 
+or 
+ci.ll<-round(exp(confint(model.1)),2) [2] 
+ci.ll
+ci.ul<-round(exp(confint(model.1)),2) [2,2]  
+ci.ul
+table(model.1$model$g_htn) 
+
+
+
+```
+
+## Table S6
+Sensitivity analysis estimating odds ratios and 95% confidence intervals for the association between hypertensive disorders of pregnancy (any versus none) and individual PFAS and their mixture among pregnant persons in the Atlanta African American Maternal-Child Cohort, 2014-2020
+```{r}
+model.1<-glm(HDP~(PFOA.iqr) + as.factor(mat_educ) + mat_age + as.factor(parity)  +  as.factor(alc.smoke) + ppbmi,
+             family =binomial(link = "logit"),
+             data=df2)
+or<-round(exp(coef(model.1)),2)
+or
+ci.ll<-round(exp(confint(model.1)),2) [2]
+ci.ll
+ci.ul<-round(exp(confint(model.1)),2) [2,2]
+ci.ul
+table(model.1$model$HDP)
+#0.98 (0.77,1.28)
+
+model.1<-glm(HDP~(PFOS.iqr) + as.factor(mat_educ) + mat_age + as.factor(parity)  +  as.factor(alc.smoke) + ppbmi,
+             family =binomial(link = "logit"),
+             data=df2)
+or<-round(exp(coef(model.1)),2)
+or
+ci.ll<-round(exp(confint(model.1)),2) [2]
+ci.ll
+ci.ul<-round(exp(confint(model.1)),2) [2,2]
+ci.ul
+table(model.1$model$HDP)
+#0.97 (0.77,1.23)
+
+model.1<-glm(HDP~(PFHxS.iqr) + as.factor(mat_educ) + mat_age + as.factor(parity)  +  as.factor(alc.smoke) +  ppbmi,
+             family =binomial(link = "logit"),
+             data=df2)
+or<-round(exp(coef(model.1)),2)
+or
+ci.ll<-round(exp(confint(model.1)),2) [2]
+ci.ll
+ci.ul<-round(exp(confint(model.1)),2) [2,2]
+ci.ul
+table(model.1$model$HDP)
+#0.85 (0.66,1.1)
+
+model.1<-glm(HDP~(PFNA.iqr) + as.factor(mat_educ) + mat_age + as.factor(parity)  +  as.factor(alc.smoke) +  ppbmi,
+             family =binomial(link = "logit"),
+             data=df2)
+or<-round(exp(coef(model.1)),2)
+or
+ci.ll<-round(exp(confint(model.1)),2) [2]
+ci.ll
+ci.ul<-round(exp(confint(model.1)),2) [2,2]
+ci.ul
+table(model.1$model$HDP)
+#1.10 (0.82,1.51)
+
+
+#mixture for HDP
+
+
+df.hdp<-c('mat_educ', 
+                 'mat_age', 
+                 'ppbmi', 
+                 'parity', 
+                 'alc.smoke', 
+                 "log.PFNA", 
+                 "log.PFOA", 
+                 "log.PFOS", 
+                 "log.PFHxS", 
+                 'HDP') 
+
+df.mixtures.hdp<-df2[df.hdp]  
+df.mixtures.hdp<-df.mixtures.hdp[complete.cases(df.mixtures.hdp),] 
+
+
+## Set names of exposure variables 
+Xmn.chem<-c("log.PFNA", "log.PFOA", "log.PFOS","log.PFHxS")  
+
+
+Mixture<- qgcomp.noboot(HDP ~ log.PFNA + log.PFOA + log.PFOS +  log.PFHxS +
+                          as.factor(mat_educ) + mat_age + as.factor(parity) + as.factor(alc.smoke) + ppbmi,
+                        expnms = Xmn.chem,
+                        data= df.mixtures.hdp,
+                        family=binomial(),
+                        q=4)
+
+# Output effect estimates 
+exp(round((Mixture $psi),2)) 
+exp(round((Mixture $ci.coef),2))
+table(df.mixtures.hdp$HDP)
+
+
+```
+
+## Table S7
+Sensitivity analysis estimating risk ratios and 95% confidence intervals for the association between hypertensive disorders of pregnancy and individual PFAS and their mixture among pregnant persons in the Atlanta African American Maternal-Child Cohort, 2014-2020
+```{r}
+## mixture
+ # preeclampsia
+
+Mixture.rr.pe<- qgcomp.glm.boot(preecl ~ log.PFNA + log.PFOA + log.PFOS +  log.PFHxS + 
+                          as.factor(mat_educ) + mat_age + as.factor(parity) + as.factor(alc.smoke) + ppbmi, 
+                        expnms = Xmn.chem, 
+                        data= df.mixtures.preec, 
+                        family=binomial(), 
+                        seed=200,
+                        rr=TRUE,
+                        q=4) 
+
+
+# Output effect estimates  
+exp(round((Mixture.rr.pe$psi),2))  
+exp(round((Mixture.rr.pe$ci.coef),2)) 
+table(df.mixtures.preec$preecl) 
+
+
+
+## gestational hypertension 
+
+Mixture.rr.ghtn<- qgcomp.glm.boot(g_htn ~ log.PFNA + log.PFOA + log.PFOS +  log.PFHxS + 
+                                  as.factor(mat_educ) + mat_age + as.factor(parity) + as.factor(alc.smoke) + ppbmi, 
+                                expnms = Xmn.chem, 
+                                data= df.mixtures.ghtn, 
+                                family=binomial(), 
+                                seed=200,
+                                rr=TRUE,
+                                q=4) 
+
+
+# Output effect estimates  
+exp(round((Mixture.rr.ghtn$psi),2))  
+exp(round((Mixture.rr.ghtn$ci.coef),2)) 
+table(df.mixtures.ghtn$g_htn) 
+
+
+
+# Preeclampsia 
+
+pfoa.preec <- glm(preecl ~ PFOA.iqr + as.factor(mat_educ) + mat_age  + 
+                   as.factor(parity)  +  
+                  as.factor(alc.smoke)  + 
+                   ppbmi, 
+                data = df2, 
+                family = poisson(link = "log")) 
+tidy(pfoa.preec, exponentiate = TRUE, conf.int = TRUE) 
+table(pfoa.preec$model$preecl)
+
+pfos.preec <- glm(preecl ~ PFOS.iqr + as.factor(mat_educ) + mat_age  + 
+                    as.factor(parity)  +  
+                    as.factor(alc.smoke)  + 
+                    ppbmi, 
+                  data = df2, 
+                  family = poisson(link = "log")) 
+tidy(pfos.preec, exponentiate = TRUE, conf.int = TRUE) 
+table(pfos.preec$model$preecl)
+
+
+pfhxs.preec <- glm(preecl ~ PFHxS.iqr + as.factor(mat_educ) + mat_age  + 
+                    as.factor(parity)  +  
+                    as.factor(alc.smoke)  + 
+                    ppbmi, 
+                  data = df2, 
+                  family = poisson(link = "log")) 
+tidy(pfhxs.preec, exponentiate = TRUE, conf.int = TRUE) 
+table(pfhxs.preec$model$preecl)
+
+pfna.preec <- glm(preecl ~ PFNA.iqr + as.factor(mat_educ) + mat_age  + 
+                     as.factor(parity)  +  
+                     as.factor(alc.smoke)  + 
+                     ppbmi, 
+                   data = df2, 
+                   family = poisson(link = "log")) 
+tidy(pfna.preec, exponentiate = TRUE, conf.int = TRUE) 
+table(pfna.preec$model$preecl)
+
+
+
+# Gestational hypertension 
+
+
+pfoa.ghtn <- glm(g_htn ~ PFOA.iqr + as.factor(mat_educ) + mat_age  + 
+                    as.factor(parity)  +  
+                    as.factor(alc.smoke)  + 
+                    ppbmi, 
+                  data = df2, 
+                  family = poisson(link = "log")) 
+tidy(pfoa.ghtn, exponentiate = TRUE, conf.int = TRUE) 
+table(pfoa.ghtn$model$g_htn)
+
+pfos.ghtn <- glm(g_htn ~ PFOS.iqr + as.factor(mat_educ) + mat_age  + 
+                    as.factor(parity)  +  
+                    as.factor(alc.smoke)  + 
+                    ppbmi, 
+                  data = df2, 
+                  family = poisson(link = "log")) 
+tidy(pfos.ghtn, exponentiate = TRUE, conf.int = TRUE) 
+table(pfos.ghtn$model$g_htn)
+
+
+pfhxs.ghtn <- glm(g_htn ~ PFHxS.iqr + as.factor(mat_educ) + mat_age  + 
+                     as.factor(parity)  +  
+                     as.factor(alc.smoke)  + 
+                     ppbmi, 
+                   data = df2, 
+                   family = poisson(link = "log")) 
+tidy(pfhxs.ghtn, exponentiate = TRUE, conf.int = TRUE) 
+table(pfhxs.ghtn$model$g_htn)
+
+pfna.ghtn <- glm(g_htn ~ PFNA.iqr + as.factor(mat_educ) + mat_age  + 
+                    as.factor(parity)  +  
+                    as.factor(alc.smoke)  + 
+                    ppbmi, 
+                  data = df2, 
+                  family = poisson(link = "log")) 
+tidy(pfna.ghtn, exponentiate = TRUE, conf.int = TRUE) 
+table(pfna.ghtn$model$g_htn)
+
+
+
+
+```
+
+## Table S8
+Sensitivity analysis estimating the association between hypertensive disorders of pregnancy and the PFAS mixture, estimated using Weighted Quantile Sum (WQS) regression among pregnant persons in the Atlanta African American Maternal-Child Cohort, 2014-2020
+```{r}
+
+# preeclampsia
+WQS.preec <- gwqs(preecl ~ wqs + as.factor(mat_educ) + mat_age  +  as.factor(parity)  +   as.factor(alc.smoke)  + ppbmi,  
+                            mix_name = Xmn.chem, 
+                            data =  df.mixtures.preec,
+                            q = 10, 
+                            validation = 0.6, 
+                            b = 200, 
+                            b1_pos = TRUE, 
+                            b_constr = FALSE, 
+                            family = "binomial", 
+                            seed = 2016)
+# bar plot
+gwqs_barplot(WQS.preec)
+# get results
+summary(WQS.preec)
+# Get ORs 
+exp(coef(WQS.preec))
+# Get CI
+round(exp(confint(WQS.preec)),2)
+
+
+# gestational hypertension
+WQS.ghtn <- gwqs(g_htn ~ wqs + as.factor(mat_educ) + mat_age  +  as.factor(parity)  +   as.factor(alc.smoke)  + ppbmi,  
+                  mix_name = Xmn.chem, 
+                  data = df.mixtures.ghtn, 
+                  q = 10, 
+                  validation = 0.6, 
+                  b = 200, 
+                  b1_pos = TRUE, 
+                  b_constr = FALSE, 
+                  family = "binomial", 
+                  seed = 2016)
+# bar plot
+gwqs_barplot(WQS.ghtn)
+# get results
+summary(WQS.ghtn)
+# Get ORs 
+exp(coef(WQS.ghtn))
+# Get CI
+round(exp(confint(WQS.ghtn)),2)
+
+
+#### example on repeated holdout WQS 
+rep.hold = lapply(1:100,function(i){ # 100 repetitions
+  gwqs(preecl ~ wqs + as.factor(mat_educ) + mat_age  +  as.factor(parity)  +   as.factor(alc.smoke)  + ppbmi,  
+       mix_name = Xmn.chem, 
+       data = df.mixtures.preec,
+       q = 10, 
+       validation = 0.6, # 40% trainging data, 60% testing data
+       b = 10, # 100 bootstraps recommended, but gWQS runs faster with fewer
+       b1_pos = TRUE, 
+       b_constr = FALSE, 
+       family = "binomial", 
+       plots = F, tables = F)})
+
+# Function to compile results from 100 repeated holdouts
+f_compile <- function(gWQSresult){ # gWQSresult = gWQS results name for repeated holdout (a list)
+  
+  # WQS index beta estimates
+  tmp1 = map(gWQSresult,"fit") %>% map(tidy) # convert fit results to a dataframe
+  tmp1 = map2(tmp1,1:length(tmp1),function(x,y){x$rep=y; return(x)}) # add repetition index number
+  tmp1 = do.call("rbind",tmp1) # bind all repetitions together
+  tmp1 = subset(tmp1, term=="wqs") # subset results to just the wqs-index estimate
+  
+  # Chemical weights
+  tmp3 = map(gWQSresult,"final_weights") # convert weight results to a dataframe
+  tmp3 = map2(tmp3,1:length(tmp3),function(x,y){x$rep.rep=y; return(x)}) # add repetition index number
+  tmp3 = do.call("rbind",tmp3) # bind all repetitions together
+  tmp3 = reshape(tmp3, timevar="mix_name", idvar="rep.rep", direction="wide") # put weights in wide format
+  names(tmp3) = sub(".*\\.", "", names(tmp3)) # remove 'mean_weight.' 
+  
+  # Merge estimates & weights
+  tmp4 = merge(tmp1,tmp3,by="rep") 
+  tmp4 <- subset(tmp4, select=-c(term,statistic,std.error,p.value)) # drop unecessary variables
+}
+
+# Apply f_compile function to put repeated holdout results into dataframe
+rep.hold.df = f_compile(rep.hold)
+
+# Check the WQS index estimate distribution - if not approximately ~N then more repetitions needed
+hist(rep.hold.df$estimate)
+
+# Calculate the nonparametric WQS index estimate & 95% CI from repeated holdout sampling distributon
+median(rep.hold.df$estimate) 
+quantile(rep.hold.df$estimate,0.025) 
+quantile(rep.hold.df$estimate,0.975)
+## How does this estimate compare to the single and no partition methods?
+
+# Calculate mean weights
+colMeans(rep.hold.df[,3:12])
+
+```
+
+## Figure S2
+Spearman correlation coefficients between natural log transformed PFAS concentrations in the Atlanta African American Maternal-Child Cohort, 2014-2020 (N=513)
+```{r}
+
+corr.vars<-c( 
+  "impPFHxS", 
+  "impPFOS", 
+  "impPFOA", 
+  "impPFNA") 
+names(df2) 
+
+df.corr<-as.data.frame(df2)[corr.vars] 
+df.corr$log.PFHxS<-log(df.corr$impPFHxS)    
+df.corr$log.PFOS<-log(df.corr$impPFOS) 
+df.corr$log.PFOA<-log(df.corr$impPFOA)     
+df.corr$log.PFNA<-log(df.corr$impPFNA) 
+
+names(df.corr) # figure out numbers for new log transformed variables 
+
+df.corr<-df.corr[c(5:8)] # SUBSET OUT LOG TRANSFORMED VARIABLES THAT WERE JUST CREATED 
+
+df.corr<-cor(df.corr,method="spearman",use="complete.obs") 
+
+colnames(df.corr)<-c(  "PFHxS", "PFOS", "PFOA", "PFNA") 
+
+rownames(df.corr)<-c(  "PFHxS", "PFOS", "PFOA", "PFNA") 
+
+
+corrplot(df.corr, 
+         method="number", 
+         type = "lower", 
+         tl.col = "black") 
+
+
+```
+
